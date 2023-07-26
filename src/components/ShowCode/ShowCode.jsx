@@ -1,19 +1,19 @@
-import React, { useState, useEffect } from "react";
-import classes from "./ShowCode.module.css";
+import React, { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import CodeEditor from "../common/CodeEditor/CodeEditor";
+import classes from "./ShowCode.module.css";
 
 import {
+  collection,
   doc,
   getDoc,
   getDocs,
   query,
-  collection,
   where,
 } from "firebase/firestore";
 import { db } from "../../firebase/auth";
 
-const ShowCode = () => {
+export default function ShowCode() {
   const { id } = useParams();
   const [html, setHtml] = useState("");
   const [css, setCss] = useState("");
@@ -42,7 +42,6 @@ const ShowCode = () => {
     const docSnap = await getDoc(docRef);
     if (docSnap.exists()) {
       const data = docSnap.data();
-      console.log(data); // Log the data object to the console
       setHtml(data.html || "");
       setCss(data.css || "");
       setJs(data.js || "");
@@ -97,7 +96,7 @@ const ShowCode = () => {
         <div className={classes.user_info}>
           <div className={classes.user_row}>
             <div className={classes.image_container}>
-              <img className={classes.image} src={pfp} alt="" />
+              <img className={classes.image} src={pfp} alt="" loading="lazy" />
             </div>
             <div className={classes.user_data}>
               <h3 className={classes.username}>@{user}</h3>
@@ -122,6 +121,4 @@ const ShowCode = () => {
       </div>
     </div>
   );
-};
-
-export default ShowCode;
+}

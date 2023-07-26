@@ -1,51 +1,26 @@
-import React, { useState, useEffect } from "react";
-import { Data } from "../../Data";
+import React, { useState } from "react";
 import classes from "./Main.module.css";
 import Card from "../common/Card/Card";
-import { collection, getDocs } from "firebase/firestore";
-import { db } from "../../firebase/auth";
+import { motion } from 'framer-motion'
+import { fadeIn, paraAnim } from "../Animation/motion";
 
-export default function Main({ modeToggle, modeToggleFunc }) {
-  const [buttons, setButtons] = useState([]);
+export default function Main({ modeToggle, modeToggleFunc, buttonsData }) {
   const [currentPage, setCurrentPage] = useState(
     parseInt(localStorage.getItem("current_page")) || 1
   );
-
   const itemsPerPage = 36;
   const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const isActive = (i) => (currentPage === i + 1 ? classes.active : "");
 
-  const fetchButtons = async () => {
-    const buttonsCollection = collection(db, "buttons");
-    const querySnapshot = await getDocs(buttonsCollection);
-    const buttonsData = querySnapshot.docs.map((doc) => {
-      const data = doc.data();
-      return { ...data, autoid: doc.id };
-    });
-    return buttonsData;
-  };
-
-  useEffect(() => {
-    const fetchButtonsData = async () => {
-      const fetchedButtons = await fetchButtons();
-      setButtons(fetchedButtons);
-    };
-
-    fetchButtonsData();
-  }, []);
-
+  const currentItems = buttonsData.slice(
+    indexOfLastItem - itemsPerPage,
+    indexOfLastItem
+  );
   const handlePageChange = (pageNumber) => {
     setCurrentPage(pageNumber);
     localStorage.setItem("current_page", pageNumber);
     window.scrollTo({ top: 500, behavior: "smooth" });
   };
-
-  const isActive = (i) => (currentPage === i + 1 ? classes.active : "");
-  const [query, setQuery] = useState("");
-  const filteredItems = buttons.filter((button) =>
-    button.html.toLowerCase().includes(query.toLowerCase())
-  );
-  const currentItems = filteredItems.slice(indexOfFirstItem, indexOfLastItem);
 
   const pageNavigationButtions = (
     <ul className={classes.paginationList}>
@@ -55,7 +30,7 @@ export default function Main({ modeToggle, modeToggleFunc }) {
       >
         {"<"}
       </li>
-      {Array(Math.ceil(filteredItems.length / itemsPerPage))
+      {Array(Math.ceil(buttonsData.length / itemsPerPage))
         .fill()
         .map((_, index) => {
           const pageNumber = index + 1;
@@ -63,7 +38,7 @@ export default function Main({ modeToggle, modeToggleFunc }) {
             pageNumber === 1 ||
             pageNumber === currentPage ||
             (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1) ||
-            pageNumber === Math.ceil(filteredItems.length / itemsPerPage)
+            pageNumber === Math.ceil(buttonsData.length / itemsPerPage)
           ) {
             return (
               <li
@@ -77,7 +52,7 @@ export default function Main({ modeToggle, modeToggleFunc }) {
           } else if (
             (pageNumber === currentPage - 2 && pageNumber > 1) ||
             (pageNumber === currentPage + 2 &&
-              pageNumber < Math.ceil(filteredItems.length / itemsPerPage))
+              pageNumber < Math.ceil(buttonsData.length / itemsPerPage))
           ) {
             return (
               <li
@@ -93,10 +68,10 @@ export default function Main({ modeToggle, modeToggleFunc }) {
         })}
       <li
         className={`${classes.paginationItem} ${isActive(
-          Math.ceil(filteredItems.length / itemsPerPage) - 1
+          Math.ceil(buttonsData.length / itemsPerPage) - 1
         )}`}
         onClick={() =>
-          handlePageChange(Math.ceil(filteredItems.length / itemsPerPage))
+          handlePageChange(Math.ceil(buttonsData.length / itemsPerPage))
         }
       >
         {">"}
@@ -106,17 +81,41 @@ export default function Main({ modeToggle, modeToggleFunc }) {
 
   return (
     <div className={classes.main_container}>
-      <h1 style={{ textAlign: "center" }}>
-        Total number of Buttons added {buttons.length}
-      </h1>
-      <div className={classes.btns_container}>
-        {currentItems.map((button) => (
-          <Card key={button.autoid} button={button} autoid={button.autoid} />
-        ))}
-      </div>
-      <div className={classes.pagination}>
-        {Data.length > itemsPerPage && pageNavigationButtions}
-      </div>
+
+
+      {(buttonsData.length === 0) ?
+
+        (<motion.h1
+          variants={paraAnim}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true }}
+          transition={{ type: "spring", stiffness: 60 }}
+          className={classes.wait}>We Are Constantly Working To Provide You With The Best Possible Experience ... <br /><br /> Thank You For Your Patience 🫠 </motion.h1>) :
+
+        (<div><h1 style={{ textAlign: "center", marginTop: "30px" }}>
+          Total number of Buttons added {buttonsData.length}
+        </h1>
+          <div className={classes.btns_container}>
+            {currentItems.map((button, index) => (
+              <motion.div
+              key={index}
+              variants={fadeIn}
+              initial={'hidden'}
+              whileInView={'visible'}
+              viewport={{once : true}}
+              transition={{ duration : 0.5 ,delay : (index%3)*0.3}}
+              >
+                <Card modeToggle={modeToggle} key={index} button={button} />
+              </motion.div>
+            ))}
+          </div>
+          <div className={classes.pagination}>
+            {buttonsData.length > itemsPerPage && pageNavigationButtions}
+          </div>
+        </div>)
+      }
+
     </div>
   );
 }
